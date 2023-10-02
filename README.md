@@ -94,3 +94,198 @@ export const login = async (email, password) => {
 ![image](https://github.com/wlopera/RNAuth/assets/7141537/3943d106-2e1c-4a03-bf45-143fa411df1a)
 
 
+### Manejo de Errores. Ejemplo usuario no existe en Firebase
+```
+const signupHandler = async ({ email, password }) => {
+    setIsAuthentication(true);
+    try {
+      const response = await createUser(email, password);
+      console.log("Firebase response:", response.data);
+    } catch (error) {
+      console.log("Login Error:", error)
+      Alert.alert(
+        "Fallo la autenticación!",
+        "No se pudo crear usuario. Favor intente nuevamente"
+      );
+    }
+    setIsAuthentication(false);
+  };
+```
+ 
+
+##### Guardando el token para uso de llamadas HTTP
+* Crear auth-context.js (API Context de React)
+  
+```
+import { createContext, useState } from "react";
+
+export const AuthContext = createContext({
+  token: "",
+  isAuthenticated: false,
+  authenticate: (token) => {},
+  logout: () => {},
+});
+
+const AuthContextProvider = ({ children }) => {
+  const [authToken, setAuthToken] = useState();
+
+  const authenticate = (token) => {
+    setAuthToken(token);
+  };
+
+  const logout = () => {
+    setAuthToken(null);
+  };
+
+  const value = {
+    token: authToken,
+    isAuthenticated: !!authToken,
+    authenticate: authenticate,
+    logout: logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export default AuthContextProvider;
+```
+
+* Modificar Auth.js 
+
+```
+import axios from "axios";
+
+const API_KEY = "AIzaSyBRdrO8ibgmhx9VUn1odO_23hbGhWGAgFc";
+const authenticate = async (mode, email, password) => {
+  const response = await axios.post(
+    `https://identitytoolkit.googleapis.com/v1/accounts:${mode}?key=${API_KEY}`,
+    {
+      email: email,
+      password: password,
+      returnSecureToken: true,
+    }
+  );
+  console.log("Firebase response:", response.data);
+  return response.data.idToken;
+};
+export const createUser = (email, password) => {
+  return authenticate("signUp", email, password);
+};
+export const login = (email, password) => {
+  return authenticate("signInWithPassword", email, password);
+};
+```
+ 
+* Ajustar llamadas al contexto para almacenar el token
+
+```
+import AuthContext from "../store/auth-context”
+
+function LoginScreen() {
+  const [isAuthentication, setIsAuthentication] = useState(false);
+
+  const authCtx = useContext(AuthContext);
+
+  const loginHandler = async ({ email, password }) => {
+    setIsAuthentication(true);
+    try {
+      const token = await login(email, password);
+      authCtx.authenticate(token);
+    } catch (error) {
+      console.log("Login Error:", error);
+      Alert.alert(
+        "Fallo la autenticación!",
+        "No se pudo conectar. Favor validar sus credenciales"
+      );
+    }
+    setIsAuthentication(false);
+  };
+```
+
+* En la App.js se está utilizando un artificio que se denomina “Protección de Pantalla “, bajo ninguna circunstancia se pueda llegar a determinadas pantallas si no se cumple una condición. En este caso si no estas conectado y tienes token.
+
+* No se puede llegar a WelcomeScreen, si no estas autenticado
+```
+function AuthenticatedStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary500 },
+        headerTintColor: "white",
+        contentStyle: { backgroundColor: Colors.primary100 },
+      }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+    </Stack.Navigator>
+  );
+}
+```
+
+ * Ajuste del lado del APP.js para que oculte o muestre las ventanas según si se esta conectado y con token válido
+ 
+```
+…
+function Navigation() {
+  const authCtx = useContext(AuthContext);
+  return (
+    <NavigationContainer>
+      {authCtx.isAuthenticated ? <AuthenticatedStack /> : <AuthStack />}
+    </NavigationContainer>
+  );
+}
+export default function App() {
+  return (
+    <>
+      <StatusBar style="light" />
+      <AuthContextProvider>
+        <Navigation />
+      </AuthContextProvider>
+    </>
+  );
+}
+
+```
+* Si me conecto o creo un nuevo usuario. Retorna el Token del usuario
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/c496f1b3-bbbc-4ac3-994d-f8b1d87eee85)
+
+### Proceso de Logout
+
+* Agregar botón de logout en App.js
+
+```
+…
+function AuthenticatedStack() {
+  const authCtx = useContext(AuthContext);
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.primary500 },
+        headerTintColor: "white",
+        contentStyle: { backgroundColor: Colors.primary100 },
+      }}
+    >
+      <Stack.Screen
+        name="Welcome"
+        component={WelcomeScreen}
+        options={{
+          headerRight: ({ tintColor }) => (
+            <IconButton
+              icon="exit"
+              color={tintColor}
+              size={24}
+              onPress={authCtx.logout}
+            />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+…
+```
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/1052dcbb-dba4-46e2-abee-6771b0835f03)
+
+ 
+ 
