@@ -30,7 +30,6 @@ function LoginScreen() {
     return <LoadingOverlay message="Conectando usuario..." />;
   }
 
-  console.log(1111, AuthContent)
   return <AuthContent isLogin onAuthenticate={loginHandler} />;
 }
 

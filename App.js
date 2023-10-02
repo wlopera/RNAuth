@@ -1,7 +1,10 @@
+import { useContext, useEffect, useState, useCallback } from "react";
+import { Image, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { useContext } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SplashScreen from "expo-splash-screen";
 
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
@@ -59,8 +62,64 @@ function Navigation() {
   const authCtx = useContext(AuthContext);
   return (
     <NavigationContainer>
-      {authCtx.isAuthenticated ? <AuthenticatedStack /> : <AuthStack />}
+      {!authCtx.isAuthenticated && <AuthStack />}
+      {authCtx.isAuthenticated && <AuthenticatedStack />}
     </NavigationContainer>
+  );
+}
+
+function Root() {
+  const [appIsReady, setAppIsReady] = useState(false);
+  const authCtx = useContext(AuthContext);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const storedToken = await AsyncStorage.getItem("token");
+
+      if (storedToken) {
+        authCtx.authenticate(storedToken);
+      }
+
+      setTimeout(() => {
+        console.log("Solo para probar el SplashScreen");
+        setAppIsReady(true);
+      }, 1000);
+    };
+    fetchToken();
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "pink",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 30,
+          }}
+        >
+          Cargando...
+        </Text>
+        <Image source={require("./assets/favicon.png")} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <Navigation />
+    </View>
   );
 }
 
@@ -69,7 +128,7 @@ export default function App() {
     <>
       <StatusBar style="light" />
       <AuthContextProvider>
-        <Navigation />
+        <Root />
       </AuthContextProvider>
     </>
   );

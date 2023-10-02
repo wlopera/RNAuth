@@ -364,7 +364,9 @@ function WelcomeScreen() {
 
 ![image](https://github.com/wlopera/RNAuth/assets/7141537/e2a1021f-0c4f-43fe-a9da-ae31786b1541)
 
-
-
+### Almacenar en el dispositivo el token. Usar token para llamadas al servicio y control de panatallas mientras se procesa de llamada a servicios de Firebase 
+*	"@react-native-async-storage/async-storage": "^1.19.3"
+*	"expo-app-loading": "^2.1.1",  // Deprecado
+*	"expo-splash-screen": "~0.20.5" // Utilizar SplashScreen para proceso de loading
  
  

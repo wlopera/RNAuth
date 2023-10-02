@@ -30,7 +30,6 @@ function SignupScreen() {
     return <LoadingOverlay message="Creando usuario..." />;
   }
 
-  console.log(12345, AuthContent);
   return <AuthContent onAuthenticate={signupHandler} />;
 }
 

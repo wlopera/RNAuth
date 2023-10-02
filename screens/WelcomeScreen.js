@@ -5,19 +5,24 @@ import axios from "axios";
 import { AuthContext } from "../store/auth-context";
 
 function WelcomeScreen() {
-  const [fetchMessage, setFetchMessage] = useState("");
+  const [fetchedMessage, setFetchedMesssage] = useState("");
 
   const authCtx = useContext(AuthContext);
+
   const token = authCtx.token;
 
   useEffect(() => {
     axios
       .get(
-        `https://react-native-expenses-14061-default-rtdb.firebaseio.com/message.json?auth=${token}`
+        "https://react-native-expenses-14061-default-rtdb.firebaseio.com/message.json?auth=" +
+          token
       )
       .then((response) => {
         console.log("respuesta:", response.data);
-        setFetchMessage(response.data);
+        setFetchedMesssage(response.data);
+      })
+      .catch((err) => {
+        console.log("Error Consultado Backend-message:", err);
       });
   }, [token]);
 
@@ -25,7 +30,7 @@ function WelcomeScreen() {
     <View style={styles.rootContainer}>
       <Text style={styles.title}>Bienvenido!</Text>
       <Text>Autenticado exitosamente!</Text>
-      <Text>{fetchMessage}</Text>
+      <Text>{fetchedMessage}</Text>
     </View>
   );
 }
