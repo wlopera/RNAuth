@@ -1,6 +1,8 @@
 # RNAuth
 APP React Native autenticación con Firebase 
 
+VER DOCUMENTO: doc/React Native - RNAuth.docx
+
 * Crear el proyecto RNAuth
 > Expo init RNAuth
 
@@ -286,6 +288,83 @@ function AuthenticatedStack() {
 ```
 
 ![image](https://github.com/wlopera/RNAuth/assets/7141537/1052dcbb-dba4-46e2-abee-6771b0835f03)
+
+
+### Demostración de uso de data en Backend (uso del token)
+ * En Firebase generar una cadena que contiene data
+
+ ![image](https://github.com/wlopera/RNAuth/assets/7141537/c1d08ba9-7e24-4a9a-b163-2927c292658c)
+
+* Copiamos la ruta para la llamada a mi servicio generado
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/222f70cf-2fe5-45cc-9743-391db70fee18)
+
+   ** https://react-native-expenses-14061-default-rtdb.firebaseio.com/message.json
+
+* Invocamos la llamada a ese servicio API
+
+```
+import axios from "axios";
+
+function WelcomeScreen() {
+  const [fetchMessage, setFetchMessage] = useState("");
+  useEffect(() => {
+    axios
+      .get(
+        "https://react-native-expenses-14061-default-rtdb.firebaseio.com/message.json"
+      )
+      .then((response) => {
+        console.log("respuesta:", response.data);
+        setFetchMessage(response.data);
+      });
+  }, []);
+
+  return (
+    <View style={styles.rootContainer}>
+      <Text style={styles.title}>Bienvenido!</Text>
+      <Text>Autenticado exitosamente!</Text>
+    </View>
+  );
+}
+…
+```
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/468079ef-542a-413c-95ff-bf92d69e4cca)
+
+
+* La llamada al servicio debe estar protegida con el token, validar si el usuario está conectado
+* Modificamos la regla en Firebase. Los servicios de lectura y escritura deben validar si el usuario está autorizado. Uso de token
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/10f85f0b-5b11-4618-b47b-c7b9dd75337a)
+
+* Actualizamos la llamada a nuestro servicio message mediante l uso del token. Componente WelcomeScreen
+
+```
+…
+import { AuthContext } from "../store/auth-context";
+
+function WelcomeScreen() {
+  const [fetchMessage, setFetchMessage] = useState("");
+
+  const authCtx = useContext(AuthContext);
+  const token = authCtx.token;
+
+  useEffect(() => {
+    axios
+      .get(
+        `https://react-native-expenses-14061-default-rtdb.firebaseio.com/message.json?auth=${token}`
+      )
+      .then((response) => {
+        console.log("respuesta:", response.data);
+        setFetchMessage(response.data);
+      });
+  }, [token]);
+…
+```
+
+![image](https://github.com/wlopera/RNAuth/assets/7141537/e2a1021f-0c4f-43fe-a9da-ae31786b1541)
+
+
 
  
  
